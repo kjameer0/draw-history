@@ -1,0 +1,179 @@
+{
+    "changes": {
+        "added": {},
+        "removed": {},
+        "updated": {
+            "pointer:pointer": [
+                {
+                    "id": "pointer:pointer",
+                    "typeName": "pointer",
+                    "x": 394.95703125,
+                    "y": 493.6953125,
+                    "lastActivityTimestamp": 1750523586618,
+                    "meta": {}
+                },
+                {
+                    "id": "pointer:pointer",
+                    "typeName": "pointer",
+                    "x": 395.01953125,
+                    "y": 493.82421875,
+                    "lastActivityTimestamp": 1750523586634,
+                    "meta": {}
+                }
+            ],
+            "shape:GzcC9esGmksaVzP9dw6Uo": [
+                {
+                    "x": 217.18359375,
+                    "y": 249.07421875,
+                    "rotation": 0,
+                    "isLocked": false,
+                    "opacity": 1,
+                    "meta": {},
+                    "id": "shape:GzcC9esGmksaVzP9dw6Uo",
+                    "type": "geo",
+                    "props": {
+                        "w": 79.00765821195758,
+                        "h": 126.28009120493277,
+                        "geo": "rectangle",
+                        "color": "black",
+                        "labelColor": "black",
+                        "fill": "none",
+                        "dash": "draw",
+                        "size": "m",
+                        "font": "draw",
+                        "align": "middle",
+                        "verticalAlign": "middle",
+                        "growY": 0,
+                        "url": "",
+                        "scale": 1,
+                        "richText": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph"
+                                }
+                            ]
+                        }
+                    },
+                    "parentId": "page:page",
+                    "index": "a1",
+                    "typeName": "shape"
+                },
+                {
+                    "x": 217.18359375,
+                    "y": 249.07421875,
+                    "rotation": 0,
+                    "isLocked": false,
+                    "opacity": 1,
+                    "meta": {},
+                    "id": "shape:GzcC9esGmksaVzP9dw6Uo",
+                    "type": "geo",
+                    "props": {
+                        "w": 79.03600812295535,
+                        "h": 126.34740903592532,
+                        "geo": "rectangle",
+                        "color": "black",
+                        "labelColor": "black",
+                        "fill": "none",
+                        "dash": "draw",
+                        "size": "m",
+                        "font": "draw",
+                        "align": "middle",
+                        "verticalAlign": "middle",
+                        "growY": 0,
+                        "url": "",
+                        "scale": 1,
+                        "richText": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph"
+                                }
+                            ]
+                        }
+                    },
+                    "parentId": "page:page",
+                    "index": "a1",
+                    "typeName": "shape"
+                }
+            ],
+            "shape:4njOaPAoErcYhOWomnrIX": [
+                {
+                    "x": 319.31074382246464,
+                    "y": 384.52815062462537,
+                    "rotation": 0,
+                    "isLocked": false,
+                    "opacity": 1,
+                    "meta": {},
+                    "id": "shape:4njOaPAoErcYhOWomnrIX",
+                    "type": "geo",
+                    "props": {
+                        "w": 72.05253742753536,
+                        "h": 106.35856812537467,
+                        "geo": "rectangle",
+                        "color": "black",
+                        "labelColor": "black",
+                        "fill": "none",
+                        "dash": "draw",
+                        "size": "m",
+                        "font": "draw",
+                        "align": "middle",
+                        "verticalAlign": "middle",
+                        "growY": 0,
+                        "url": "",
+                        "scale": 1,
+                        "richText": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph"
+                                }
+                            ]
+                        }
+                    },
+                    "parentId": "page:page",
+                    "index": "a23pg",
+                    "typeName": "shape"
+                },
+                {
+                    "x": 319.3473895816295,
+                    "y": 384.60035887856475,
+                    "rotation": 0,
+                    "isLocked": false,
+                    "opacity": 1,
+                    "meta": {},
+                    "id": "shape:4njOaPAoErcYhOWomnrIX",
+                    "type": "geo",
+                    "props": {
+                        "w": 72.07839166837054,
+                        "h": 106.41526612143531,
+                        "geo": "rectangle",
+                        "color": "black",
+                        "labelColor": "black",
+                        "fill": "none",
+                        "dash": "draw",
+                        "size": "m",
+                        "font": "draw",
+                        "align": "middle",
+                        "verticalAlign": "middle",
+                        "growY": 0,
+                        "url": "",
+                        "scale": 1,
+                        "richText": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph"
+                                }
+                            ]
+                        }
+                    },
+                    "parentId": "page:page",
+                    "index": "a23pg",
+                    "typeName": "shape"
+                }
+            ]
+        }
+    },
+    "source": "user"
+}
