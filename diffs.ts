@@ -1,4 +1,3 @@
-import { update } from "lodash";
 import {
   Editor,
   TLEventMapHandler,
@@ -10,12 +9,10 @@ import {
   TLShapePartial,
   TLDrawShape,
   TLDefaultShape,
+  TLPointerId,
+  TLInstanceId,
 } from "tldraw";
 
-type TLShapeAction = {
-  actionType: "added" | "removed" | "updated";
-  shapeProperties: TLShapePartial;
-};
 //returns a [from, to] array
 export function extractShapeUpdates(
   change: HistoryEntry<TLRecord>
@@ -64,28 +61,7 @@ export function extractShapeRemovals(change: HistoryEntry<TLRecord>) {
   });
 }
 
-export function* applyTimeLineChanges(
-  historyEntries: HistoryEntry<TLRecord>[],
-  editor: Editor
-) {
-  //iterate each entry
-  //pull out updated
-  for (const historyRecord of historyEntries) {
-    const additions = extractShapeAdditions(historyRecord);
-    const updates = extractShapeUpdates(historyRecord);
-    const removals = extractShapeRemovals(historyRecord);
-
-    editor.createShapes(additions);
-    editor.updateShapes(updates);
-    editor.deleteShapes(removals);
-    yield;
-  }
-  //
-}
-//extract pointer updates
-//extract instance updates
-
-//apply changes? (take editory as input)
+//used to pass TLrecord to editor as an actual shape
 function isTLShapePartial<T extends TLShape>(
   obj: any
 ): obj is TLShapePartial<T> {
@@ -96,4 +72,52 @@ function isTLShapePartial<T extends TLShape>(
   return true;
 }
 
-//
+//make sure some geometry on screen has changed, if not then the changes would be changes to the user's cursor position, which is unnecessary
+export function hasShapeChanges(change: HistoryEntry<TLRecord>): boolean {
+  const { updated, added, removed } = change.changes;
+  for (const id in updated) {
+    if (id.includes("shape")) return true;
+  }
+  for (const id in added) {
+    if (id.includes("shape")) return true;
+  }
+  for (const id in removed) {
+    if (id.includes("shape")) return true;
+  }
+  return false;
+}
+
+//take a single history event and apply its changes to
+//the canvas
+export function applyTimeLineChange(
+  historyRecord: HistoryEntry<TLRecord>,
+  editor: Editor,
+  playbackDirection: number
+) {
+  const additions = extractShapeAdditions(historyRecord);
+  const updates = extractShapeUpdates(historyRecord);
+  const removals = extractShapeRemovals(historyRecord);
+  editor.run(() => {
+    if (playbackDirection < 0) {
+      if (removals.length > 0) {
+        editor.createShapes(removals);
+      }
+      if (updates.length > 0) {
+        editor.updateShapes(updates);
+      }
+      if (additions.length > 0) {
+        editor.deleteShapes(additions);
+      }
+    } else if (playbackDirection > 0) {
+      if (additions.length > 0) {
+        editor.createShapes(additions);
+      }
+      if (updates.length > 0) {
+        editor.updateShapes(updates);
+      }
+      if (removals.length > 0) {
+        editor.deleteShapes(removals);
+      }
+    }
+  });
+}

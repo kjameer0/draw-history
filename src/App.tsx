@@ -6,12 +6,12 @@ import {
   Tldraw,
   HistoryEntry,
   TLRecord,
-  TLShapeId,
-  TLShape,
-  TLShapePartial,
 } from "tldraw";
 import "tldraw/tldraw.css";
 import { useInterval } from "usehooks-ts";
+import { hasShapeChanges, applyTimeLineChange } from "../diffs";
+import Playback from "./components/Playback";
+import { PlaybackDirections } from "./components/types";
 
 // There's a guide at the bottom of this file!
 
@@ -20,41 +20,43 @@ export default function StoreEventsExample() {
   const [diffs, setDiffs] = useState<HistoryEntry<TLRecord>[]>(
     [] as HistoryEntry<TLRecord>[]
   );
-  const [delay, setDelay] = useState<null | number>(null);
   const [currentDiff, setCurrentDiff] = useState<number>(0);
   const setAppToState = useCallback((editor: Editor) => {
     setEditor(editor);
   }, []);
-
   const [storeEvents, setStoreEvents] = useState<string[]>([]);
+  // const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [playbackDirection, setPlaybackDirection] = useState<number>(
+    PlaybackDirections.Paused
+  );
+  const isPlaying = playbackDirection !== PlaybackDirections.Paused;
 
-  useInterval(() => {
-    function executeCallback() {
-      console.log(currentDiff);
-      const change = diffs[currentDiff];
-      if (change === undefined) {
-        setDelay(null);
+  useInterval(
+    () => {
+      if (!(editor && isPlaying)) {
         return;
       }
-      const allChanges = change.changes;
-      const { updated, added } = allChanges;
-      const keys = Object.keys(updated);
-      const shape = keys.filter((key) => key.includes("shape:"));
-      console.log(updated);
-      if (shape.length === 0) return;
-      const shapeId: TLShapeId = shape[0] as TLShapeId;
-      const shapeObj = updated[shapeId];
-      const to = shapeObj[1];
-      if (isTLShapePartial(to)) {
-        editor?.updateShape(to);
-      }
-    }
-    executeCallback();
-    setCurrentDiff((prev) => prev + 1);
-  }, delay);
+      const recordToApply = diffs[currentDiff];
+      if (!recordToApply) return;
+
+      requestAnimationFrame(() => {
+        applyTimeLineChange(recordToApply, editor, playbackDirection);
+
+        setCurrentDiff((prev) => {
+          const nextDiff = prev + playbackDirection;
+          if (nextDiff < 0 || nextDiff >= diffs.length) {
+            setPlaybackDirection(PlaybackDirections.Paused);
+            return Math.max(0, Math.min(diffs.length - 1, nextDiff));
+          }
+          return nextDiff;
+        });
+      });
+    },
+    isPlaying ? 100 : null
+  );
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || isPlaying) return;
 
     function logChangeEvent(eventName: string) {
       setStoreEvents((events) => [...events, eventName]);
@@ -64,12 +66,12 @@ export default function StoreEventsExample() {
     const handleChangeEvent: TLEventMapHandler<"change"> = (
       change: HistoryEntry<TLRecord>
     ) => {
-      if (JSON.stringify(change).includes("shape")) {
-        console.log(change);
+      if (hasShapeChanges(change) && !isPlaying) {
+        setDiffs((prev) => {
+          return [...prev, change];
+        });
       }
-      // Added
-      setDiffs((prev) => [...prev, change]);
-      // console.log(change.changes);
+
       for (const record of Object.values(change.changes.added)) {
         if (record.typeName === "shape") {
           logChangeEvent(`created shape (${record.id})\n`);
@@ -128,11 +130,8 @@ export default function StoreEventsExample() {
     return () => {
       cleanupFunction();
     };
-  }, [editor]);
+  }, [editor, isPlaying]);
 
-  async function handlePlaybackClick() {
-    setDelay(typeof delay === "number" ? null : 100);
-  }
   return (
     <div style={{ display: "flex" }}>
       <div style={{ width: "60%", height: "100vh" }}>
@@ -154,19 +153,21 @@ export default function StoreEventsExample() {
         }}
         onCopy={(event) => event.stopPropagation()}
       >
-        <button onClick={handlePlaybackClick}>playback</button>
+        {editor && (
+          <Playback
+            diffs={diffs}
+            setDiffs={setDiffs}
+            currentDiff={currentDiff}
+            setCurrentDiff={setCurrentDiff}
+            editor={editor}
+            isPlaying={isPlaying}
+            playbackDirection={playbackDirection}
+            setPlaybackDirection={setPlaybackDirection}
+          />
+        )}
+
         <pre>{storeEvents}</pre>
       </div>
     </div>
   );
-}
-
-function isTLShapePartial<T extends TLShape>(
-  obj: any
-): obj is TLShapePartial<T> {
-  if (typeof obj !== "object" || obj === null) return false;
-  if (typeof obj.id !== "string") return false;
-  if ("meta" in obj && typeof obj.meta !== "object") return false;
-  if ("props" in obj && typeof obj.props !== "object") return false;
-  return true;
 }
