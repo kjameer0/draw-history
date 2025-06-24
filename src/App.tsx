@@ -6,13 +6,16 @@ import {
   Tldraw,
   HistoryEntry,
   TLRecord,
+  TLComponents
 } from "tldraw";
 import "tldraw/tldraw.css";
-import { useInterval } from "usehooks-ts";
 import { hasShapeChanges, applyTimeLineChange } from "../diffs";
 import Playback from "./components/Playback";
 import { PlaybackDirections } from "./components/types";
 
+const components: TLComponents = {
+	TopPanel: CustomTopZone,
+}
 // There's a guide at the bottom of this file!
 
 export default function StoreEventsExample() {
@@ -143,7 +146,7 @@ export default function StoreEventsExample() {
   return (
     <div style={{ display: "flex" }}>
       <div style={{ width: "60%", height: "100vh" }}>
-        <Tldraw onMount={setAppToState} />
+        <Tldraw onMount={setAppToState} components={components} />
       </div>
       <div
         style={{
@@ -177,4 +180,21 @@ export default function StoreEventsExample() {
       </div>
     </div>
   );
+}
+
+
+function CustomTopZone() {
+	return (
+		<div
+			style={{
+				backgroundColor: 'thistle',
+				width: '100%',
+				textAlign: 'center',
+				padding: '2px',
+				minWidth: '80px',
+			}}
+		>
+			<p>Top Zone</p>
+		</div>
+	)
 }
