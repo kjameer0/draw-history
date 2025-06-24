@@ -5,7 +5,6 @@ type props = {
   diffs: HistoryEntry<TLRecord>[];
   setDiffs: React.Dispatch<React.SetStateAction<HistoryEntry<TLRecord>[]>>;
   currentDiff: number;
-  setCurrentDiff: React.Dispatch<React.SetStateAction<number>>;
   editor: Editor;
   isPlaying: boolean;
   playbackDirection: number;

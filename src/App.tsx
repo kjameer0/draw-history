@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Editor,
   TLEventMapHandler,
@@ -20,40 +20,47 @@ export default function StoreEventsExample() {
   const [diffs, setDiffs] = useState<HistoryEntry<TLRecord>[]>(
     [] as HistoryEntry<TLRecord>[]
   );
-  const [currentDiff, setCurrentDiff] = useState<number>(0);
+  const currentDiffRef = useRef<number>(0);
   const setAppToState = useCallback((editor: Editor) => {
     setEditor(editor);
   }, []);
   const [storeEvents, setStoreEvents] = useState<string[]>([]);
-  // const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackDirection, setPlaybackDirection] = useState<number>(
     PlaybackDirections.Paused
   );
   const isPlaying = playbackDirection !== PlaybackDirections.Paused;
 
-  useInterval(
-    () => {
-      if (!(editor && isPlaying)) {
-        return;
-      }
-      const recordToApply = diffs[currentDiff];
+  useEffect(() => {
+    if (!isPlaying || !editor) return;
+
+    let frameId: number;
+
+    const tick = () => {
+      const recordToApply = diffs[currentDiffRef.current];
       if (!recordToApply) return;
 
-      requestAnimationFrame(() => {
-        applyTimeLineChange(recordToApply, editor, playbackDirection);
+      applyTimeLineChange(recordToApply, editor, playbackDirection);
 
-        setCurrentDiff((prev) => {
-          const nextDiff = prev + playbackDirection;
-          if (nextDiff < 0 || nextDiff >= diffs.length) {
-            setPlaybackDirection(PlaybackDirections.Paused);
-            return Math.max(0, Math.min(diffs.length - 1, nextDiff));
-          }
-          return nextDiff;
-        });
-      });
-    },
-    isPlaying ? 100 : null
-  );
+      const nextDiff = currentDiffRef.current + playbackDirection;
+      if (nextDiff < 0 || nextDiff >= diffs.length) {
+        setTimeout(() => {
+          setPlaybackDirection(PlaybackDirections.Paused);
+        }, 0);
+        currentDiffRef.current = Math.max(
+          0,
+          Math.min(diffs.length - 1, nextDiff)
+        );
+        return;
+      }
+
+      currentDiffRef.current = nextDiff;
+      frameId = requestAnimationFrame(tick); // Schedule next frame
+    };
+
+    frameId = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(frameId);
+  }, [isPlaying, editor, diffs, playbackDirection]);
 
   useEffect(() => {
     if (!editor || isPlaying) return;
@@ -66,6 +73,7 @@ export default function StoreEventsExample() {
     const handleChangeEvent: TLEventMapHandler<"change"> = (
       change: HistoryEntry<TLRecord>
     ) => {
+      if (isPlaying) return;
       if (hasShapeChanges(change) && !isPlaying) {
         setDiffs((prev) => {
           return [...prev, change];
@@ -157,8 +165,7 @@ export default function StoreEventsExample() {
           <Playback
             diffs={diffs}
             setDiffs={setDiffs}
-            currentDiff={currentDiff}
-            setCurrentDiff={setCurrentDiff}
+            currentDiff={currentDiffRef.current}
             editor={editor}
             isPlaying={isPlaying}
             playbackDirection={playbackDirection}
@@ -166,7 +173,7 @@ export default function StoreEventsExample() {
           />
         )}
 
-        <pre>{storeEvents}</pre>
+        {/* <pre>{storeEvents}</pre> */}
       </div>
     </div>
   );

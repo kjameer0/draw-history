@@ -19,14 +19,18 @@ export function extractShapeUpdates(
 ): TLShapePartial[] {
   const { updated } = change.changes;
   //take each update
-  const shapeChanges = Object.values(updated).filter((diff) => {
-    //individual from to array
-    return diff[0].id.includes("shape");
-  });
+  const diffs = Object.values(updated);
+  const shapeChanges: TLRecord[] = Array(diffs.length);
+  for (let i = 0; i < diffs.length; i++) {
+    const diff = diffs[i];
+    if (diff[0].id.includes("shape")) {
+      shapeChanges[i] = diff[1];
+    }
+  }
+
   return shapeChanges.map((update) => {
-    const to = update[1];
-    if (isTLShapePartial<TLDefaultShape>(to)) {
-      return to;
+    if (isTLShapePartial<TLDefaultShape>(update)) {
+      return update;
     } else {
       throw new Error("shape is not compatible");
     }
