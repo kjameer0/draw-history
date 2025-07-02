@@ -1,37 +1,36 @@
-import _ from "lodash";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Editor,
   TLEventMapHandler,
   Tldraw,
   HistoryEntry,
   TLRecord,
-  TLComponents
 } from "tldraw";
 import "tldraw/tldraw.css";
 import { hasShapeChanges, applyTimeLineChange } from "../diffs";
-import Playback from "./components/Playback";
 import { PlaybackDirections } from "./components/types";
+import ActionBar from "./components/ActionBar";
+import { Slider } from "@mui/material";
 
-const components: TLComponents = {
-	TopPanel: CustomTopZone,
-}
-// There's a guide at the bottom of this file!
-
-export default function StoreEventsExample() {
-  const [editor, setEditor] = useState<Editor>();
-  const [diffs, setDiffs] = useState<HistoryEntry<TLRecord>[]>(
-    [] as HistoryEntry<TLRecord>[]
-  );
-  const currentDiffRef = useRef<number>(0);
+export default function App() {
   const setAppToState = useCallback((editor: Editor) => {
     setEditor(editor);
   }, []);
-  const [storeEvents, setStoreEvents] = useState<string[]>([]);
+  const [editor, setEditor] = useState<Editor>();
+  const [diffs, setDiffs] = useState<HistoryEntry<TLRecord>[]>([]);
+  const framesRef = useRef<HistoryEntry<TLRecord>[]>([]);
+  const debounceRef = useRef<NodeJS.Timeout>(undefined);
   const [playbackDirection, setPlaybackDirection] = useState<number>(
     PlaybackDirections.Paused
   );
+
   const isPlaying = playbackDirection !== PlaybackDirections.Paused;
+  const ActionBarMemoized = useMemo(() => {
+    return () => ActionBar({ isPlaying, setPlaybackDirection });
+  }, [setPlaybackDirection, isPlaying]);
+
+  const currentDiffRef = useRef<number>(0);
+  const [currentDiff, setCurrentDiff] = useState<number>(0);
 
   useEffect(() => {
     if (!isPlaying || !editor) return;
@@ -62,73 +61,44 @@ export default function StoreEventsExample() {
 
     frameId = requestAnimationFrame(tick);
 
-    return () => cancelAnimationFrame(frameId);
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
   }, [isPlaying, editor, diffs, playbackDirection]);
 
   useEffect(() => {
-    if (!editor || isPlaying) return;
-
-    function logChangeEvent(eventName: string) {
-      setStoreEvents((events) => [...events, eventName]);
+    if (!isPlaying) {
+      setCurrentDiff(currentDiffRef.current);
+      return;
     }
+    const interval = setInterval(() => {
+      setCurrentDiff(currentDiffRef.current);
+    }, 100); // 10 FPS updates are smooth enough
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!editor || isPlaying) return;
 
     //[1]
     const handleChangeEvent: TLEventMapHandler<"change"> = (
       change: HistoryEntry<TLRecord>
     ) => {
       if (isPlaying) return;
-      if (hasShapeChanges(change) && !isPlaying) {
-        setDiffs((prev) => {
-          return [...prev, change];
-        });
-      }
 
-      for (const record of Object.values(change.changes.added)) {
-        if (record.typeName === "shape") {
-          logChangeEvent(`created shape (${record.id})\n`);
-        }
-      }
+      if (hasShapeChanges(change)) {
+        framesRef.current.push(change);
+        clearTimeout(debounceRef.current);
 
-      // Updated
-      for (const [from, to] of Object.values(change.changes.updated)) {
-        if (
-          from.typeName === "instance" &&
-          to.typeName === "instance" &&
-          from.currentPageId !== to.currentPageId
-        ) {
-          logChangeEvent(
-            `changed page (${from.currentPageId}, ${to.currentPageId})`
-          );
-        } else if (from.id.startsWith("shape") && to.id.startsWith("shape")) {
-          let diff = _.reduce(
-            from,
-            (result: any[], value, key: string) =>
-              _.isEqual(value, (to as any)[key])
-                ? result
-                : result.concat([key, (to as any)[key]]),
-            []
-          );
-          if (diff?.[0] === "props") {
-            diff = _.reduce(
-              (from as any).props,
-              (result: any[], value, key) =>
-                _.isEqual(value, (to as any).props[key])
-                  ? result
-                  : result.concat([key, (to as any).props[key]]),
-              []
-            );
-          }
-          logChangeEvent(
-            `${from.id} updated shape (${JSON.stringify(diff)})\n`
-          );
-        }
-      }
-
-      // Removed
-      for (const record of Object.values(change.changes.removed)) {
-        if (record.typeName === "shape") {
-          logChangeEvent(`deleted shape (${record.id})\n`);
-        }
+        const timeoutId = setTimeout(() => {
+          setDiffs((prev) => {
+            const nextDiffs = [...prev, ...framesRef.current];
+            framesRef.current.length = 0;
+            return nextDiffs;
+          });
+        }, 200);
+        
+        debounceRef.current = timeoutId;
       }
     };
 
@@ -144,57 +114,23 @@ export default function StoreEventsExample() {
   }, [editor, isPlaying]);
 
   return (
-    <div style={{ display: "flex" }}>
-      <div style={{ width: "60%", height: "100vh" }}>
-        <Tldraw onMount={setAppToState} components={components} />
+    <div style={{ display: "" }}>
+      <div style={{ width: "100%", height: "80vh" }}>
+        <Tldraw
+          onMount={setAppToState}
+          components={{ TopPanel: () => <p>{currentDiff}</p> }}
+        />
       </div>
-      <div
-        style={{
-          width: "40%",
-          height: "100vh",
-          padding: 8,
-          background: "#eee",
-          border: "none",
-          fontFamily: "monospace",
-          fontSize: 12,
-          borderLeft: "solid 2px #333",
-          display: "flex",
-          flexDirection: "column-reverse",
-          overflow: "auto",
-        }}
-        onCopy={(event) => event.stopPropagation()}
-      >
-        {editor && (
-          <Playback
-            diffs={diffs}
-            setDiffs={setDiffs}
-            currentDiff={currentDiffRef.current}
-            editor={editor}
-            isPlaying={isPlaying}
-            playbackDirection={playbackDirection}
-            setPlaybackDirection={setPlaybackDirection}
-          />
-        )}
-
-        {/* <pre>{storeEvents}</pre> */}
+      <div style={{ padding: "10px" }}>
+        <ActionBarMemoized />
+        <Slider
+          sx={{ width: "50%" }}
+          aria-label="Volume"
+          value={currentDiff}
+          max={diffs.length - 1}
+          min={0}
+        />
       </div>
     </div>
   );
-}
-
-
-function CustomTopZone() {
-	return (
-		<div
-			style={{
-				backgroundColor: 'thistle',
-				width: '100%',
-				textAlign: 'center',
-				padding: '2px',
-				minWidth: '80px',
-			}}
-		>
-			<p>Top Zone</p>
-		</div>
-	)
 }

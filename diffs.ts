@@ -101,6 +101,9 @@ export function applyTimeLineChange(
   const additions = extractShapeAdditions(historyRecord);
   const updates = extractShapeUpdates(historyRecord);
   const removals = extractShapeRemovals(historyRecord);
+  // console.log("Additons,", additions);
+  // console.log("updates,", updates);
+  // console.log("Removals,", removals);
   editor.run(() => {
     if (playbackDirection < 0) {
       if (removals.length > 0) {
