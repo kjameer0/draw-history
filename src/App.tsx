@@ -7,7 +7,11 @@ import {
   TLRecord,
 } from "tldraw";
 import "tldraw/tldraw.css";
-import { hasShapeChanges, applyTimeLineChange } from "../diffs";
+import {
+  hasShapeChanges,
+  applyTimeLineChange,
+  applyMultipleTimeLineChanges,
+} from "../diffs";
 import { PlaybackDirections } from "./components/types";
 import ActionBar from "./components/ActionBar";
 import { Slider } from "@mui/material";
@@ -87,6 +91,9 @@ export default function App() {
       if (isPlaying) return;
 
       if (hasShapeChanges(change)) {
+        //this if check is added to make sure no new diffs are added when someone skips in the timeline
+        if ("instance_page_state:page:page" in change.changes.updated) return;
+
         framesRef.current.push(change);
         clearTimeout(debounceRef.current);
 
@@ -112,12 +119,24 @@ export default function App() {
       cleanupFunction();
     };
   }, [editor, isPlaying]);
+
   function handleSliderChange(value: number) {
-    // console.log(Object.keys(ev.target));
-    setCurrentDiff((prev) => {
+    const oldCurrentDiff = currentDiffRef.current;
+    setCurrentDiff(() => {
       currentDiffRef.current = value;
       return value;
     });
+    console.log("slider action");
+    if (editor) {
+      applyMultipleTimeLineChanges(
+        diffs,
+        0,
+        value,
+        oldCurrentDiff,
+        editor,
+        playbackDirection
+      );
+    }
   }
 
   return (
@@ -134,14 +153,14 @@ export default function App() {
           sx={{ width: "90%" }}
           aria-label="Volume"
           value={currentDiff}
-          onChange={(e, value: number) => {
+          onChange={(_, value: number) => {
             currentDiffRef.current = value;
             setCurrentDiff(value);
           }}
           max={diffs.length - 1}
           min={0}
           onChangeCommitted={(
-            event: React.SyntheticEvent | Event,
+            _: React.SyntheticEvent | Event,
             value: number
           ) => {
             handleSliderChange(value);

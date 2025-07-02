@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Editor, HistoryEntry, TLRecord } from "tldraw";
 import { PlaybackDirections } from "./types";
 type props = {
@@ -14,7 +14,7 @@ export default function Playback({
   // diffs,
   // currentDiff,
   // setCurrentDiff,
-  editor,
+
   isPlaying,
   // playbackDirection,
   setPlaybackDirection,

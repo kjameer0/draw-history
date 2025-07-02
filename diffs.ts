@@ -1,16 +1,11 @@
+import { PlaybackDirections } from "./src/components/types";
 import {
   Editor,
-  TLEventMapHandler,
-  Tldraw,
   HistoryEntry,
   TLRecord,
-  TLShapeId,
   TLShape,
   TLShapePartial,
-  TLDrawShape,
   TLDefaultShape,
-  TLPointerId,
-  TLInstanceId,
 } from "tldraw";
 
 //returns a [from, to] array
@@ -127,4 +122,53 @@ export function applyTimeLineChange(
       }
     }
   });
+}
+
+export function applyMultipleTimeLineChanges(
+  historyRecords: HistoryEntry<TLRecord>[],
+  startIdx: number,
+  endIdx: number,
+  _: number,
+  editor: Editor,
+  playbackDirection: number
+) {
+  historyRecords = historyRecords.slice(startIdx, endIdx);
+  const extractedChanges = historyRecords.map((record) => {
+    return {
+      updates: extractShapeUpdates(record),
+      removals: extractShapeRemovals(record),
+      additions: extractShapeAdditions(record),
+    };
+  });
+  playbackDirection = PlaybackDirections.Forward;
+  editor.run(
+    () => {
+      editor.selectAll();
+      editor.deleteShapes(editor.getSelectedShapeIds());
+      for (const { removals, updates, additions } of extractedChanges) {
+        if (playbackDirection < 0) {
+          if (removals.length > 0) {
+            editor.createShapes(removals);
+          }
+          if (updates.length > 0) {
+            editor.updateShapes(updates);
+          }
+          if (additions.length > 0) {
+            editor.deleteShapes(additions);
+          }
+        } else if (playbackDirection > 0) {
+          if (additions.length > 0) {
+            editor.createShapes(additions);
+          }
+          if (updates.length > 0) {
+            editor.updateShapes(updates);
+          }
+          if (removals.length > 0) {
+            editor.deleteShapes(removals);
+          }
+        }
+      }
+    },
+    { history: "ignore" }
+  );
 }

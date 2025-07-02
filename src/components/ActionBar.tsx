@@ -1,5 +1,4 @@
 import React from "react";
-import { Editor, HistoryEntry, TLRecord } from "tldraw";
 import { PlaybackDirections } from "./types";
 import IconButton from "@mui/material/IconButton";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -41,4 +40,3 @@ export default function ActionBar({ isPlaying, setPlaybackDirection }: Props) {
     </div>
   );
 }
-
