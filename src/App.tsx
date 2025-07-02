@@ -31,7 +31,7 @@ export default function App() {
 
   const currentDiffRef = useRef<number>(0);
   const [currentDiff, setCurrentDiff] = useState<number>(0);
-
+  //main logic for playing back recordings
   useEffect(() => {
     if (!isPlaying || !editor) return;
 
@@ -97,7 +97,7 @@ export default function App() {
             return nextDiffs;
           });
         }, 200);
-        
+
         debounceRef.current = timeoutId;
       }
     };
@@ -112,6 +112,13 @@ export default function App() {
       cleanupFunction();
     };
   }, [editor, isPlaying]);
+  function handleSliderChange(value: number) {
+    // console.log(Object.keys(ev.target));
+    setCurrentDiff((prev) => {
+      currentDiffRef.current = value;
+      return value;
+    });
+  }
 
   return (
     <div style={{ display: "" }}>
@@ -124,11 +131,21 @@ export default function App() {
       <div style={{ padding: "10px" }}>
         <ActionBarMemoized />
         <Slider
-          sx={{ width: "50%" }}
+          sx={{ width: "90%" }}
           aria-label="Volume"
           value={currentDiff}
+          onChange={(e, value: number) => {
+            currentDiffRef.current = value;
+            setCurrentDiff(value);
+          }}
           max={diffs.length - 1}
           min={0}
+          onChangeCommitted={(
+            event: React.SyntheticEvent | Event,
+            value: number
+          ) => {
+            handleSliderChange(value);
+          }}
         />
       </div>
     </div>
