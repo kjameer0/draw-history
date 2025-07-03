@@ -8,13 +8,14 @@ import FastRewindIcon from "@mui/icons-material/FastRewind";
 type Props = {
   isPlaying: boolean;
   setPlaybackDirection: React.Dispatch<React.SetStateAction<number>>;
+  handlePlaybackClick: (direction: number) => void;
 };
 
-export default function ActionBar({ isPlaying, setPlaybackDirection }: Props) {
-  const handlePlaybackClick = (direction: number) => {
-    setPlaybackDirection(direction);
-  };
-
+export default function ActionBar({
+  isPlaying,
+  setPlaybackDirection,
+  handlePlaybackClick,
+}: Props) {
   return (
     <div style={{ display: "flex", gap: 8 }}>
       <IconButton

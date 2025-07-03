@@ -128,7 +128,7 @@ export function applyMultipleTimeLineChanges(
   historyRecords: HistoryEntry<TLRecord>[],
   startIdx: number,
   endIdx: number,
-  _: number,
+  currentIdx: number,
   editor: Editor,
   playbackDirection: number
 ) {

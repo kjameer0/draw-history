@@ -24,17 +24,36 @@ export default function App() {
   const [diffs, setDiffs] = useState<HistoryEntry<TLRecord>[]>([]);
   const framesRef = useRef<HistoryEntry<TLRecord>[]>([]);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
+  const editorCleanupRef = useRef<() => void>(undefined);
   const [playbackDirection, setPlaybackDirection] = useState<number>(
     PlaybackDirections.Paused
   );
 
   const isPlaying = playbackDirection !== PlaybackDirections.Paused;
-  const ActionBarMemoized = useMemo(() => {
-    return () => ActionBar({ isPlaying, setPlaybackDirection });
-  }, [setPlaybackDirection, isPlaying]);
-
   const currentDiffRef = useRef<number>(0);
   const [currentDiff, setCurrentDiff] = useState<number>(0);
+
+  const ActionBarMemoized = useMemo(() => {
+    function handlePlaybackClick(direction: number) {
+      if (diffs.length === 0) return;
+      if (editor && isPlaying) {
+        //set the playback start to be the correct frame in the sequence
+        applyMultipleTimeLineChanges(
+          diffs,
+          0,
+          currentDiff,
+          currentDiff,
+          editor,
+          PlaybackDirections.SkipAhead
+        );
+      }
+
+      setPlaybackDirection(direction);
+    }
+    return () =>
+      ActionBar({ isPlaying, setPlaybackDirection, handlePlaybackClick });
+  }, [setPlaybackDirection, isPlaying, diffs]);
+
   //main logic for playing back recordings
   useEffect(() => {
     if (!isPlaying || !editor) return;
@@ -92,8 +111,13 @@ export default function App() {
 
       if (hasShapeChanges(change)) {
         //this if check is added to make sure no new diffs are added when someone skips in the timeline
-        if ("instance_page_state:page:page" in change.changes.updated) return;
-
+        if (
+          "instance_page_state:page:page" in change.changes.updated &&
+          Object.keys(change.changes.added).length === 0 &&
+          Object.keys(change.changes.removed).length === 0
+        ) {
+          return;
+        }
         framesRef.current.push(change);
         clearTimeout(debounceRef.current);
 
@@ -114,11 +138,12 @@ export default function App() {
       source: "user",
       scope: "all",
     });
+    editorCleanupRef.current = cleanupFunction;
 
     return () => {
-      cleanupFunction();
+      if (editorCleanupRef.current) editorCleanupRef.current();
     };
-  }, [editor, isPlaying]);
+  }, [editor, isPlaying, diffs, currentDiff]);
 
   function handleSliderChange(value: number) {
     const oldCurrentDiff = currentDiffRef.current;
@@ -126,7 +151,10 @@ export default function App() {
       currentDiffRef.current = value;
       return value;
     });
-    console.log("slider action");
+
+    if (editorCleanupRef.current) {
+      editorCleanupRef.current();
+    }
     if (editor) {
       applyMultipleTimeLineChanges(
         diffs,
