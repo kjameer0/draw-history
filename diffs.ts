@@ -99,6 +99,7 @@ export function applyTimeLineChange(
   // console.log("Additons,", additions);
   // console.log("updates,", updates);
   // console.log("Removals,", removals);
+
   editor.run(() => {
     if (playbackDirection < 0) {
       if (removals.length > 0) {
@@ -123,6 +124,22 @@ export function applyTimeLineChange(
     }
   });
 }
+// export function applyTimeLineChange(
+//   historyRecord: RecordsDiff<TLRecord>,
+//   editor: Editor,
+//   playbackDirection: number
+// ) {
+//   // console.log("Additons,", additions);
+//   // console.log("updates,", updates);
+//   // console.log("Removals,", removals);
+//   const copy = structuredClone(historyRecord);
+//   if (playbackDirection < 0) {
+//     const tempAdd = structuredClone(copy.added);
+//     copy.added = copy.removed;
+//     copy.removed = tempAdd;
+//   }
+//   editor.store.applyDiff(copy);
+// }
 
 export function applyMultipleTimeLineChanges(
   historyRecords: HistoryEntry<TLRecord>[],
