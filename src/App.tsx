@@ -49,16 +49,16 @@ export default function App() {
     return () =>
       ActionBar({
         isPlaying,
-        isRecording,
-        setIsRecording,
         setPlaybackDirection,
         handlePlaybackClick,
+        isRecording,
+        setIsRecording,
       });
   }, [setPlaybackDirection, isPlaying, diffs, isRecording]);
 
   //main logic for playing back recordings
   useEffect(() => {
-    if (!isPlaying || !editor || isRecording) return;
+    if (!isPlaying || !editor) return;
 
     let frameId: number;
 
@@ -89,10 +89,10 @@ export default function App() {
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [isPlaying, editor, diffs, playbackDirection, isRecording]);
+  }, [isPlaying, editor, diffs, playbackDirection]);
 
   useEffect(() => {
-    if (!isPlaying || isRecording) {
+    if (!isPlaying) {
       setCurrentDiff(currentDiffRef.current);
       return;
     }
@@ -100,10 +100,9 @@ export default function App() {
       setCurrentDiff(currentDiffRef.current);
     }, 100); // 10 FPS updates are smooth enough
     return () => clearInterval(interval);
-  }, [isPlaying, isRecording]);
+  }, [isPlaying]);
 
   useEffect(() => {
-    //if we are recording should we clean up? definitely not
     if (!editor) return;
     if (isPlaying) {
       editorCleanupRef.current();
@@ -112,7 +111,14 @@ export default function App() {
     // [2]
     const cleanupFunction = editor.store.listen(
       (change: HistoryEntry<TLRecord>) =>
-        handleChangeEvent(change, isPlaying, framesRef, debounceRef, setDiffs),
+        handleChangeEvent(
+          change,
+          isPlaying,
+          framesRef,
+          debounceRef,
+          setDiffs,
+          isRecording
+        ),
       {
         source: "user",
         scope: "all",
@@ -123,7 +129,7 @@ export default function App() {
     return () => {
       cleanupFunction();
     };
-  }, [editor, isPlaying, diffs, currentDiff]);
+  }, [editor, isPlaying, diffs, currentDiff, isRecording]);
 
   function handleSliderChange(value: number) {
     const oldCurrentDiff = currentDiffRef.current;
@@ -155,6 +161,7 @@ export default function App() {
       <div style={{ padding: "10px" }}>
         <ActionBarMemoized />
         <Slider
+          disabled={isRecording}
           sx={{ width: "90%" }}
           aria-label="Volume"
           value={currentDiff}
@@ -181,7 +188,8 @@ const handleChangeEvent = (
   isPlaying: boolean,
   framesRef: React.RefObject<HistoryEntry<TLRecord>[]>,
   debounceRef: React.RefObject<NodeJS.Timeout | undefined>,
-  setDiffs: React.Dispatch<React.SetStateAction<HistoryEntry<TLRecord>[]>>
+  setDiffs: React.Dispatch<React.SetStateAction<HistoryEntry<TLRecord>[]>>,
+  isRecording: boolean
 ) => {
   if (isPlaying) return;
 

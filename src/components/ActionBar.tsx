@@ -5,7 +5,6 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
 import FastRewindIcon from "@mui/icons-material/FastRewind";
 import { Button } from "@mui/material";
-import { SettingsRemoteTwoTone } from "@mui/icons-material";
 
 type Props = {
   isPlaying: boolean;
